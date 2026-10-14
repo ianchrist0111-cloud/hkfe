@@ -1,0 +1,36 @@
+{
+  "name": "hkfes-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "HKFES — Full-Stack Professional Trading Platform (PWA + REST/WebSocket API)",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev": "node -e \"const { spawn } = require('child_process'); spawn('npm', ['--prefix', 'backend', 'run', 'start'], { stdio: 'inherit', shell: true }); spawn('npm', ['--prefix', 'frontend', 'run', 'dev'], { stdio: 'inherit', shell: true });\"",
+    "build:frontend": "npm --prefix frontend run build",
+    "build:backend": "npm --prefix backend run build",
+    "build": "npm run build:backend && npm run build:frontend",
+    "test": "npm --prefix backend test && npm --prefix frontend test",
+    "test:backend": "npm --prefix backend test",
+    "test:frontend": "npm --prefix frontend test",
+    "seed:backend": "npm --prefix backend run seed",
+    "prisma:push": "npm --prefix backend run prisma:push"
+  },
+  "keywords": [
+    "trading",
+    "forex",
+    "crypto",
+    "pwa",
+    "react",
+    "vite",
+    "express",
+    "prisma",
+    "websocket"
+  ],
+  "author": "HKFES Team",
+  "license": "UNLICENSED"
+}

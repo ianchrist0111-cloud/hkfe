@@ -1,0 +1,159 @@
+/* ============================================================
+   HKFES Animations & Keyframes
+   ============================================================ */
+
+/* ── Fade ── */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ── Slide ── */
+@keyframes slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+@keyframes slide-down {
+  from { transform: translateY(-20px); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+@keyframes slide-in-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes slide-in-left {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+/* ── Scale ── */
+@keyframes scale-in {
+  from { transform: scale(0.92); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+@keyframes scale-bounce {
+  0%   { transform: scale(0.85); opacity: 0; }
+  70%  { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+/* ── Price tick flash ── */
+@keyframes price-flash-gain {
+  0%   { background: transparent; }
+  30%  { background: rgba(34, 197, 94, 0.25); }
+  100% { background: transparent; }
+}
+@keyframes price-flash-loss {
+  0%   { background: transparent; }
+  30%  { background: rgba(239, 68, 68, 0.25); }
+  100% { background: transparent; }
+}
+
+/* ── Skeleton shimmer ── */
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Pulse ── */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+@keyframes pulse-scale {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.04); }
+}
+
+/* ── Spin ── */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Checkmark draw ── */
+@keyframes check-draw {
+  from { stroke-dashoffset: 100; }
+  to   { stroke-dashoffset: 0; }
+}
+
+/* ── Number count up (via opacity) ── */
+@keyframes number-reveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Dot bounce (loading) ── */
+@keyframes dot-bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40%           { transform: scale(1); }
+}
+
+/* ── Glow pulse ── */
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(240, 165, 0, 0.3); }
+  50%       { box-shadow: 0 0 28px rgba(240, 165, 0, 0.6); }
+}
+
+/* ── Live dot ── */
+@keyframes live-blink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* ── Particle drift ── */
+@keyframes particle-drift {
+  0%   { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+  20%  { opacity: 0.6; }
+  100% { transform: translateY(-80px) translateX(20px) scale(0.4); opacity: 0; }
+}
+
+/* ── Chart line draw ── */
+@keyframes chart-draw {
+  from { stroke-dashoffset: 1000; }
+  to   { stroke-dashoffset: 0; }
+}
+
+/* ── Toast slide ── */
+@keyframes toast-in {
+  from { transform: translateX(120%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes toast-out {
+  from { transform: translateX(0);    opacity: 1; }
+  to   { transform: translateX(120%); opacity: 0; }
+}
+
+/* ── Modal ── */
+@keyframes modal-in {
+  from { transform: translateY(40px) scale(0.97); opacity: 0; }
+  to   { transform: translateY(0)    scale(1);    opacity: 1; }
+}
+
+/* ── Bottom sheet ── */
+@keyframes sheet-in {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+/* ── Utility classes ── */
+.animate-fade-in    { animation: fade-in 0.3s ease forwards; }
+.animate-slide-up   { animation: slide-up 0.35s ease forwards; }
+.animate-scale-in   { animation: scale-in 0.25s ease forwards; }
+.animate-spin       { animation: spin 1s linear infinite; }
+.animate-pulse      { animation: pulse 2s ease-in-out infinite; }
+.animate-live-dot   { animation: live-blink 1.2s ease-in-out infinite; }
+
+.flash-gain { animation: price-flash-gain 0.5s ease; }
+.flash-loss { animation: price-flash-loss 0.5s ease; }
+
+/* ── Stagger delays for list items ── */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.10s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.20s; }
+.stagger-5 { animation-delay: 0.25s; }

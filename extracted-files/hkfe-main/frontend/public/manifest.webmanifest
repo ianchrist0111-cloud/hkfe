@@ -1,0 +1,70 @@
+{
+  "name": "HKFES Trading Terminal",
+  "short_name": "HKFES",
+  "description": "Institutional-grade multi-asset trading, automated bots, and high-yield earn platform.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#07090e",
+  "theme_color": "#07090e",
+  "categories": ["finance", "business", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Deposit Funds",
+      "short_name": "Deposit",
+      "description": "Instant crypto and wire deposits",
+      "url": "/wallet/deposit",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Trade Terminal",
+      "short_name": "Trade",
+      "description": "Execute orders on FX, Crypto & Stocks",
+      "url": "/trade",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Yield Bots & Earn",
+      "short_name": "Bots",
+      "description": "Automated grid and DCA yield strategies",
+      "url": "/services",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Portfolio Overview",
+      "short_name": "Portfolio",
+      "description": "Real-time PnL and active positions",
+      "url": "/portfolio",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

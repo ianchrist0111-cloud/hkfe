@@ -1,0 +1,79 @@
+.statusContainer {
+  position: fixed;
+  top: calc(56px + env(safe-area-inset-top, 0px) + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  pointer-events: none;
+  animation: pillSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full, 24px);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+}
+
+.pillOffline {
+  background: rgba(30, 20, 10, 0.94);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  color: #f59e0b;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 12px rgba(245, 158, 11, 0.2);
+}
+
+.pillReconnected {
+  background: rgba(10, 30, 22, 0.94);
+  border: 1px solid rgba(0, 229, 153, 0.45);
+  color: #00e599;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 12px rgba(0, 229, 153, 0.25);
+}
+
+.pulsingDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulseDot 1.4s ease-in-out infinite;
+}
+
+.refreshBtn {
+  background: rgba(245, 158, 11, 0.2);
+  border: none;
+  color: #f59e0b;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-left: 4px;
+  transition: all 0.15s ease;
+}
+
+.refreshBtn:hover {
+  background: rgba(245, 158, 11, 0.35);
+}
+
+@keyframes pillSlide {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.85); }
+}

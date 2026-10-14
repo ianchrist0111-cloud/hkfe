@@ -1,0 +1,312 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 900px;
+  padding-bottom: calc(var(--space-6) + env(safe-area-inset-bottom));
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.header h1 {
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.headerSub {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.markAll {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  color: var(--brand-mint-500);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.markAll:hover {
+  background: rgba(0, 229, 153, 0.12);
+  border-color: var(--brand-mint-500);
+}
+
+/* ── Filter Tabs ── */
+.filterTabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filterTab {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.filterTab:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.filterTabActive {
+  background: rgba(0, 229, 153, 0.12) !important;
+  color: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+}
+
+/* ── Simulator / Sandbox Strip ── */
+.sandboxCard {
+  background: var(--bg-surface);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sandboxLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.sandboxBtns {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sandboxBtn {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.sandboxBtn:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-strong);
+}
+
+/* ── Notification List ── */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-card);
+}
+
+.item:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.unread {
+  border-color: rgba(0, 229, 153, 0.35);
+  background: rgba(0, 229, 153, 0.03);
+}
+
+.icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.content strong {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.timeTag {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.content p {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  margin: 4px 0 8px;
+  line-height: 1.4;
+}
+
+.actionRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.actionBtn {
+  background: rgba(0, 229, 153, 0.12);
+  color: var(--accent-primary);
+  border: 1px solid rgba(0, 229, 153, 0.3);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.actionBtn:hover {
+  background: var(--accent-primary);
+  color: #07090e;
+}
+
+@media (max-width: 768px) {
+  .actionBtn {
+    min-height: 38px;
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand-mint-500);
+  flex-shrink: 0;
+  margin-top: 8px;
+  box-shadow: 0 0 8px var(--brand-glow);
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-16) var(--space-4);
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+}
+
+.emptyIconWrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Light Mode Polish ── */
+[data-theme="light"] .markAll {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.12);
+  color: var(--brand-mint-500);
+}
+
+[data-theme="light"] .markAll:hover {
+  background: rgba(5, 150, 105, 0.08);
+  border-color: var(--brand-mint-500);
+}
+
+[data-theme="light"] .unread {
+  border-color: rgba(5, 150, 105, 0.40);
+  background: rgba(5, 150, 105, 0.04);
+}
+
+[data-theme="light"] .actionBtn {
+  background: rgba(5, 150, 105, 0.10);
+  color: #047857;
+  border-color: rgba(5, 150, 105, 0.30);
+}
+
+[data-theme="light"] .actionBtn:hover {
+  background: var(--brand-mint-500);
+  color: #ffffff;
+}
+
+[data-theme="light"] .sandboxCard {
+  background: #ffffff;
+  border-color: rgba(15, 23, 42, 0.16);
+}
+
+[data-theme="light"] .sandboxBtn {
+  background: #f8fafc;
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+[data-theme="light"] .sandboxBtn:hover {
+  background: #f1f5f9;
+  border-color: rgba(15, 23, 42, 0.22);
+}

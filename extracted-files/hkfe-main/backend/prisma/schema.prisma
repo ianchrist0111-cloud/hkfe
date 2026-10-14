@@ -1,0 +1,352 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 1. User
+model User {
+  id                String   @id @default(uuid())
+  email             String   @unique
+  passwordHash      String
+  firstName         String?
+  lastName          String?
+  dateOfBirth       String?
+  phoneNumber       String?
+  role              String   @default("user") // "user", "admin", "super_admin"
+  status            String   @default("active") // "active", "suspended", "deleted"
+  kycStatus         String   @default("not_started") // "not_started", "pending", "approved", "rejected"
+  mfaEnabled        Boolean  @default(false)
+  mfaSecret         String?
+  mfaBackupCodes    String?  // JSON string
+  emailVerified     Boolean  @default(false)
+  emailVerifiedAt   DateTime?
+  tradingBlocked    Boolean  @default(false)
+  withdrawalsBlocked Boolean @default(false)
+  depositsBlocked   Boolean  @default(false)
+  lastLoginAt       DateTime?
+  lastLoginIp       String?
+  failedLoginCount  Int      @default(0)
+  lockedUntil       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  kycRecord             KYCRecord?
+  wallet                SimulatedWallet?
+  trades                Trade[]
+  transactions          Transaction[]
+  strategySubscriptions StrategySubscription[]
+  auditLogs             AuditLog[]
+  pushSubscriptions     PushSubscription[]
+  cryptoTransactions    CryptoTransaction[]
+  supportTickets        SupportTicket[]
+
+  @@index([email])
+  @@index([role])
+  @@index([status])
+  @@index([kycStatus])
+}
+
+// 2. KYC Record
+model KYCRecord {
+  id                String    @id @default(uuid())
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addressLine1      String?
+  addressLine2      String?
+  city              String?
+  state             String?
+  zipCode           String?
+  country           String    @default("US")
+  nationality       String?
+  occupation        String?
+  sourceOfFunds     String?
+  documentType      String?   // "passport", "drivers_license", "national_id"
+  documentNumber    String?
+  documentExpiry    String?
+  documentRef       String?   // front side (data URL or file ref)
+  documentBackRef   String?   // back side (data URL or file ref)
+  selfieRef         String?   // liveness selfie (data URL or file ref)
+  caseReference     String?
+  submittedAt       DateTime?
+  reviewedAt        DateTime?
+  reviewedByAdminId String?
+  notes             String?
+}
+
+// 3. Simulated Wallet
+model SimulatedWallet {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalBalance     Float    @default(0.0)
+  availableBalance Float    @default(0.0)
+  reservedTrading  Float    @default(0.0)
+  reservedEarn     Float    @default(0.0)
+  reservedBots     Float    @default(0.0)
+  currency         String   @default("USD")
+  updatedAt        DateTime @updatedAt
+
+  transactions     Transaction[]
+}
+
+// 4. Asset
+model Asset {
+  id              String   @id @default(uuid())
+  symbol          String   @unique
+  displayName     String
+  assetClass      String   // "fx", "crypto", "equity", "index"
+  baseCurrency    String?
+  quoteCurrency   String   @default("USD")
+  isActive        Boolean  @default(true)
+  seedPrice       Float
+  currentPrice    Float
+  volatilityParam Float    @default(0.15)
+  driftParam      Float    @default(0.0)
+  minTradeSize    Float    @default(1.0)
+  maxTradeSize    Float?
+  pipSize         Float?
+  high24h         Float?
+  low24h          Float?
+  change24h       Float    @default(0.0)
+
+  trades          Trade[]
+  strategies      Strategy[]
+
+  @@index([symbol])
+  @@index([assetClass])
+}
+
+// 5. Trade
+model Trade {
+  id                     String    @id @default(uuid())
+  userId                 String
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assetSymbol            String
+  asset                  Asset     @relation(fields: [assetSymbol], references: [symbol])
+  strategySubscriptionId String?
+  strategySubscription   StrategySubscription? @relation(fields: [strategySubscriptionId], references: [id])
+  direction              String    // "buy", "sell"
+  orderType              String    // "market", "limit", "stop"
+  status                 String    @default("open") // "pending", "open", "closed", "cancelled"
+  sizeUsd                Float
+  units                  Float?
+  entryPrice             Float?
+  exitPrice              Float?
+  limitPrice             Float?
+  stopLoss               Float?
+  takeProfit             Float?
+  realizedPnl            Float?
+  simulatedFee           Float     @default(0.0)
+  openedAt               DateTime?
+  closedAt               DateTime?
+  durationSeconds        Int?
+  targetExpiry           DateTime?
+  payoutRate             Float?    @default(0.90)
+  strikePrice            Float?
+  createdAt              DateTime  @default(now())
+  notes                  String?
+
+  @@index([userId])
+  @@index([assetSymbol])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// 6. Strategy
+model Strategy {
+  id           String   @id @default(uuid())
+  name         String
+  strategyType String   // "earn", "grid_bot", "dca_bot", "copy_trade", "arbitrage", "options"
+  description  String?
+  riskLevel    String   // "low", "medium", "high"
+  simulatedApy Float?
+  configSchema String?  // JSON string
+  isActive     Boolean  @default(true)
+  assetSymbol  String?
+  asset        Asset?   @relation(fields: [assetSymbol], references: [symbol])
+  createdAt    DateTime @default(now())
+
+  subscriptions StrategySubscription[]
+}
+
+// 7. Strategy Subscription
+model StrategySubscription {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  strategyId    String
+  strategy      Strategy  @relation(fields: [strategyId], references: [id], onDelete: Cascade)
+  status        String    @default("active") // "active", "paused", "stopped"
+  allocatedUsd  Float
+  config        String?   // JSON string
+  totalPnl      Float     @default(0.0)
+  accruedYield  Float     @default(0.0)
+  startedAt     DateTime  @default(now())
+  stoppedAt     DateTime?
+  nextAccrualAt DateTime?
+
+  trades        Trade[]
+}
+
+// 8. Transaction
+model Transaction {
+  id            String          @id @default(uuid())
+  walletId      String
+  wallet        SimulatedWallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          String          // "deposit", "withdrawal", "trade_pnl", "earn_payout", "fee", "balance_reset", "admin_adjustment"
+  amount        Float
+  balanceBefore Float
+  balanceAfter  Float
+  referenceId   String?
+  referenceType String?
+  description   String?
+  status        String          @default("completed") // "pending", "completed", "failed"
+  createdAt     DateTime        @default(now())
+
+  @@index([walletId])
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// 9. Audit Log
+model AuditLog {
+  id               String   @id @default(uuid())
+  eventType        String   // e.g., "LOGIN_SUCCESS", "ORDER_PLACED", "ADMIN_BALANCE_RESET"
+  actorId          String?
+  actor            User?    @relation(fields: [actorId], references: [id])
+  actorRole        String?
+  targetEntityType String?
+  targetEntityId   String?
+  ipAddress        String?
+  userAgent        String?
+  metadata         String?  // JSON string
+  createdAt        DateTime @default(now())
+
+  @@index([eventType])
+  @@index([actorId])
+  @@index([createdAt])
+}
+
+// 10. Push Subscription
+model PushSubscription {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint   String
+  p256dh     String
+  auth       String
+  platform   String?   // "ios", "android", "desktop"
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+
+  @@index([userId])
+}
+
+// 11. Crypto Transaction (Manual custodial flow)
+model CryptoTransaction {
+  id                String    @id @default(uuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              String    // "deposit" | "withdrawal"
+  asset             String    // "BTC" | "USDT"
+  network           String    // "BTC_MAINNET", "USDT_TRC20", "USDT_ERC20", "USDT_BEP20"
+  amount            Float
+  amountUsd         Float
+  feeAmount         Float     @default(0.0)
+  netAmount         Float     @default(0.0)
+  fromAddress       String?
+  toAddress         String
+  txHash            String?   @unique
+  explorerUrl       String?
+  proofImageUrl     String?
+  status            String    @default("PENDING_VERIFICATION") // "PENDING_VERIFICATION", "PENDING_REVIEW", "PROCESSING", "COMPLETED", "REJECTED", "FAILED"
+  rejectionReason   String?
+  internalNotes     String?
+  slaDueAt          DateTime?
+  reviewedByAdminId String?
+  reviewedAt        DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([type, status])
+  @@index([txHash])
+  @@index([createdAt])
+}
+
+// 12. Platform Deposit Custody Wallets
+model PlatformDepositWallet {
+  id                  String   @id @default(uuid())
+  asset               String   // "BTC", "USDT", etc.
+  network             String   // "BTC_MAINNET", "USDT_TRC20", "USDT_ERC20", "USDT_BEP20", etc.
+  address             String   @unique
+  memoOrTag           String?
+  qrCodeUrl           String?
+  minDeposit          Float    @default(10.0)
+  confirmationsNeeded Int      @default(2)
+  details             String?  // Custom wallet details / notes / network instructions
+  isActive            Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+// 12b. Global Platform Super Admin Configuration
+model PlatformConfig {
+  id              String   @id @default("default")
+  paymentsEnabled Boolean  @default(false)
+  telegramEnabled Boolean  @default(false)
+  telegramHandle  String?  @default("")
+  telegramNumber  String?  @default("")
+  telegramUrl     String?  @default("")
+  updatedAt       DateTime @updatedAt
+}
+
+// 13. Support Ticket (user -> admin helpdesk)
+model SupportTicket {
+  id               String    @id @default(uuid())
+  ticketNumber     String    @unique
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category         String    // "account", "kyc", "deposit", "withdrawal", "trading", "technical", "other"
+  subject          String
+  priority         String    @default("normal") // "low", "normal", "high", "urgent"
+  status           String    @default("open")   // "open", "in_progress", "awaiting_user", "resolved", "closed"
+  contactChannel   String    @default("in_app") // "in_app", "email", "telegram"
+  contactHandle    String?
+  assignedAdminId  String?
+  lastActivityAt   DateTime  @default(now())
+  resolvedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  messages         SupportMessage[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model SupportMessage {
+  id          String        @id @default(uuid())
+  ticketId    String
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId    String?
+  authorRole  String        // "user", "admin", "super_admin", "system"
+  authorName  String?
+  body        String
+  isInternal  Boolean       @default(false) // admin-only internal note
+  createdAt   DateTime      @default(now())
+
+  @@index([ticketId])
+}

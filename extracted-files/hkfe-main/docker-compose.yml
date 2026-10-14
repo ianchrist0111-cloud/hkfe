@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hkfes-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-hkfes}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hkfes_secure_password_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-hkfes_production}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hkfes} -d ${POSTGRES_DB:-hkfes_production}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hkfes-backend
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL:-file:./dev.db}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost}
+      - RATE_LIMIT_AUTH_MAX=10
+      - RATE_LIMIT_API_MAX=100
+      - MAX_FAILED_LOGIN_ATTEMPTS=5
+      - ACCOUNT_LOCKOUT_MINUTES=15
+    volumes:
+      - backend-data:/app/prisma
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/api/v1/health/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: hkfes-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  backend-data:
+  postgres-data:

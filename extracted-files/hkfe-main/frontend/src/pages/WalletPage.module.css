@@ -1,0 +1,298 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 1100px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.page h1 {
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.balanceCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  box-shadow: var(--shadow-card);
+}
+
+:global([data-theme="light"]) .balanceCard {
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+}
+
+:global([data-theme="dark"]) .balanceCard {
+  background: linear-gradient(145deg, #141b2a 0%, #0d121c 100%);
+}
+
+.totalBal {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.totalBal span {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.totalBal strong {
+  font-size: var(--text-4xl);
+  font-weight: 800;
+  font-family: var(--font-mono);
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+.subBals {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+
+.subBals div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.subBals span {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.subBals strong {
+  font-size: var(--text-base);
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.btnDeposit, .btnWithdraw {
+  flex: 1;
+  min-width: 140px;
+  padding: 12px 18px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  border: none;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btnDeposit {
+  background: var(--brand-mint-500);
+  color: #ffffff;
+  box-shadow: 0 2px 12px var(--brand-glow);
+}
+
+:global([data-theme="dark"]) .btnDeposit {
+  background: #00e599;
+  color: #07090e;
+}
+
+.btnDeposit:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.btnWithdraw {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+}
+
+.btnWithdraw:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-strong);
+}
+
+.bankCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  box-shadow: var(--shadow-card);
+}
+
+:global([data-theme="light"]) .bankCard {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.bankCard div {
+  flex: 1;
+}
+
+.bankCard strong {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.bankCard p {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin: 2px 0 0;
+}
+
+.txSection {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-card);
+}
+
+:global([data-theme="light"]) .txSection {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.txSection h3 {
+  font-size: var(--text-base);
+  font-weight: 700;
+  margin-bottom: 0;
+  color: var(--text-primary);
+}
+
+.sectionHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.sectionHead h3 {
+  min-width: 0;
+}
+
+.txRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background var(--transition-fast);
+}
+
+.txRow:last-child {
+  border-bottom: none;
+}
+
+.txIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  border: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.txInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.txInfo strong {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.txInfo span {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.empty {
+  color: var(--text-muted);
+  text-align: center;
+  padding: var(--space-8);
+  font-size: var(--text-sm);
+}
+
+.walletHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.walletHeaderActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 767px) {
+  .walletHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .walletHeaderActions {
+    width: 100%;
+  }
+  .walletHeaderActions button {
+    flex: 1;
+    min-height: 44px;
+  }
+  .balanceCard {
+    padding: 16px;
+    border-radius: var(--radius-lg);
+  }
+  .totalBal strong {
+    font-size: var(--font-fluid-balance);
+  }
+  .subBals {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 12px;
+  }
+  .actions {
+    flex-direction: column;
+  }
+  .btnDeposit, .btnWithdraw {
+    width: 100%;
+    min-height: 46px;
+  }
+}
