@@ -1,7 +1,6 @@
 import { Router, Response } from 'express';
 import prisma from '../prisma';
 import { authenticateJwt, AuthRequest } from '../middlewares/auth';
-import PriceEngineService from '../services/priceEngineService';
 
 const router = Router();
 
@@ -67,7 +66,7 @@ router.get('/performance', authenticateJwt, async (req: AuthRequest, res: Respon
 
     for (let i = pointsCount; i >= 0; i--) {
       const time = new Date(now - i * interval).toISOString();
-      val += (Math.random() - 0.46) * 20;
+      val += (Math.random() - 0.46) * 120;
       data.push({
         timestamp: time,
         value: Number(Math.max(0, val).toFixed(2)),
@@ -87,11 +86,11 @@ router.get('/allocation', authenticateJwt, async (req: AuthRequest, res: Respons
     const wallet = await prisma.simulatedWallet.findUnique({ where: { userId } });
 
     const total = wallet ? wallet.totalBalance : 0;
+    const safeTotal = total > 0 ? total : 1;
     const cash = wallet ? wallet.availableBalance : 0;
     const trading = wallet ? wallet.reservedTrading : 0;
     const earn = wallet ? wallet.reservedEarn : 0;
     const bots = wallet ? wallet.reservedBots : 0;
-    const safeTotal = total || 1;
 
     res.json({
       success: true,

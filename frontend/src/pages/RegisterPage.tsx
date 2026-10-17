@@ -96,36 +96,10 @@ export default function RegisterPage() {
       }
 
       if (res.error) {
-        if (res.error.code === 'NETWORK_ERROR') {
-          login({
-            id: `user-${Date.now()}`,
-            email: form.email,
-            firstName: form.email.split('@')[0],
-            lastName: '',
-            role: 'user',
-            kycStatus: 'pending',
-            mfaEnabled: false,
-            createdAt: new Date().toISOString(),
-            lastLoginAt: new Date().toISOString(),
-          }, 'demo-token');
-          navigate('/onboarding');
-          return;
-        }
         setServerError(res.error.message || 'Registration failed.');
       }
     } catch {
-      login({
-        id: `user-${Date.now()}`,
-        email: form.email,
-        firstName: form.email.split('@')[0],
-        lastName: '',
-        role: 'user',
-        kycStatus: 'pending',
-        mfaEnabled: false,
-        createdAt: new Date().toISOString(),
-        lastLoginAt: new Date().toISOString(),
-      }, 'demo-token');
-      navigate('/onboarding');
+      setServerError('Unable to create your account right now. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -266,3 +240,113 @@ export default function RegisterPage() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

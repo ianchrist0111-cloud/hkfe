@@ -56,11 +56,11 @@ export default function AdminDashboard() {
   }, []);
 
   const handleBulkReset = async () => {
-    if (!window.confirm('Reset all demo paper user wallets back to $0 USD?')) return;
+    if (!window.confirm('Reset all demo paper user wallets back to $10,000 USD?')) return;
     try {
       const res = await api.adminBulkResetBalance();
       if (res.success) {
-        setActionMsg('✓ All user wallets reset to $0 USD successfully.');
+        setActionMsg('✓ All user wallets reset to $10,000 USD successfully.');
         loadData();
         setTimeout(() => setActionMsg(null), 4000);
       }
@@ -147,7 +147,17 @@ export default function AdminDashboard() {
         gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
         gap: 'var(--space-4)',
       }}>
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-4)', cursor: 'pointer', transition: 'all var(--transition-fast)' }} onClick={() => navigate('/admin/kyc')}>
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-lg)',
+            padding: 'var(--space-4)',
+            cursor: 'pointer',
+            transition: 'all var(--transition-fast)',
+          }}
+          onClick={() => navigate('/admin/kyc')}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <span style={{ fontSize: '1.4rem' }}>🛡️</span>
             <strong style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>KYC Compliance Queue</strong>
@@ -157,7 +167,17 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-4)', cursor: 'pointer', transition: 'all var(--transition-fast)' }} onClick={() => navigate('/admin/engine')}>
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-lg)',
+            padding: 'var(--space-4)',
+            cursor: 'pointer',
+            transition: 'all var(--transition-fast)',
+          }}
+          onClick={() => navigate('/admin/engine')}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <span style={{ fontSize: '1.4rem' }}>⚡</span>
             <strong style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>Market Volatility Injector</strong>
@@ -167,7 +187,17 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-4)', cursor: 'pointer', transition: 'all var(--transition-fast)' }} onClick={() => navigate('/admin/users')}>
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-lg)',
+            padding: 'var(--space-4)',
+            cursor: 'pointer',
+            transition: 'all var(--transition-fast)',
+          }}
+          onClick={() => navigate('/admin/users')}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <span style={{ fontSize: '1.4rem' }}>👥</span>
             <strong style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>User Account Moderation</strong>
@@ -177,7 +207,17 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-4)', cursor: 'pointer', transition: 'all var(--transition-fast)' }} onClick={() => navigate('/admin/audit-logs')}>
+        <div
+          style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-lg)',
+            padding: 'var(--space-4)',
+            cursor: 'pointer',
+            transition: 'all var(--transition-fast)',
+          }}
+          onClick={() => navigate('/admin/audit-logs')}
+        >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             <span style={{ fontSize: '1.4rem' }}>📋</span>
             <strong style={{ fontSize: 'var(--text-sm)', color: 'var(--text-primary)' }}>Immutable Audit Logs</strong>
@@ -237,7 +277,7 @@ export default function AdminDashboard() {
                 {u.role}
               </span>
               <span style={{ marginLeft: 'auto', color: 'var(--text-muted)', fontSize: 'var(--text-xs)', fontFamily: 'var(--font-mono)' }}>
-                ${Number(u.wallet?.totalBalance ?? 0).toLocaleString()} USD
+                ${(u.wallet?.totalBalance ?? 0).toLocaleString()} USD
               </span>
               <button className={styles.btnView} onClick={() => navigate(`/admin/users/${u.id}`)}>
                 Inspect →
