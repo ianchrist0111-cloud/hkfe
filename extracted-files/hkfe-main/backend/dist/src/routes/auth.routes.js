@@ -56,73 +56,132 @@ function getClientIp(req) {
         || 'unknown';
 }
 // POST /auth/register
-router.post('/register', (0, validate_1.validateBody)(schemas_1.registerSchema), async (req, res) => {
+router.post(
+  '/register',
+  validateBody(registerSchema),
+  async (req, res) => {
     try {
-        const { email, password, firstName, lastName } = req.body;
-        const existingUser = await prisma_1.default.user.findUnique({ where: { email } });
-        if (existingUser) {
-            return res.status(409).json({
-                success: false,
-                error: { code: 'EMAIL_IN_USE', message: 'An account with this email address already exists.' },
-            });
-        }
-        const passwordHash = await bcryptjs_1.default.hash(password, 12); // Increased from 10 to 12 rounds
-        const user = await prisma_1.default.user.create({
-            data: {
-                email,
-                passwordHash,
-                firstName: firstName || null,
-                lastName: lastName || null,
-                role: 'user',
-                status: 'active',
-                kycStatus: 'not_started',
-                wallet: {
-                    create: {
-                        totalBalance: 0.0,
-                        availableBalance: 0.0,
-                        currency: 'USD',
-                    },
-                },
-            },
-            include: {
-                wallet: true,
-            },
+      const { email, password, firstName, lastName } = req.body;
+
+      // 1. Normalize the email address
+      const normalizedEmail = email.toLowerCase().trim();
+
+      // 2. Check whether the email is already registered
+      const existingUser = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+      });
+
+      if (existingUser) {
+        return res.status(409).json({
+          success: false,
+          error: {
+            code: 'EMAIL_IN_USE',
+            message:
+              'An account with this email address already exists.',
+          },
         });
-        // Record audit log
-        await prisma_1.default.auditLog.create({
-            data: {
-                eventType: 'USER_REGISTERED',
-                actorId: user.id,
-                actorRole: user.role,
-                targetEntityType: 'user',
-                targetEntityId: user.id,
-                ipAddress: getClientIp(req),
-                userAgent: req.headers['user-agent'] || null,
-                metadata: JSON.stringify({ email: user.email }),
+      }
+
+      // 3. Hash the password
+      const passwordHash = await bcrypt.hash(password, 12);
+
+      // 4. Create the user and wallet
+      const user = await prisma.user.create({
+        data: {
+          email: normalizedEmail,
+          passwordHash,
+          firstName: firstName || null,
+          lastName: lastName || null,
+          role: 'user',
+          status: 'active',
+          kycStatus: 'not_started',
+          emailVerified: false,
+
+          wallet: {
+            create: {
+              totalBalance: 0.0,
+              availableBalance: 0.0,
+              reservedTrading: 0.0,
+              reservedEarn: 0.0,
+              reservedBots: 0.0,
+              currency: 'USD',
             },
-        });
-        const token = jsonwebtoken_1.default.sign({ id: user.id, email: user.email, role: user.role }, env_1.ENV.JWT_SECRET, { expiresIn: '7d', jwtid: crypto_1.default.randomUUID() });
-        res.status(201).json({
-            success: true,
-            data: {
-                user: {
-                    id: user.id,
-                    email: user.email,
-                    firstName: user.firstName,
-                    lastName: user.lastName,
-                    role: user.role,
-                    kycStatus: user.kycStatus,
-                    emailVerified: user.emailVerified,
-                    wallet: user.wallet,
-                },
-                token,
-            },
-        });
+          },
+        },
+        include: {
+          wallet: true,
+        },
+      });
+
+      // 5. Record registration in the audit log
+      await prisma.auditLog.create({
+        data: {
+          eventType: 'USER_REGISTERED',
+          actorId: user.id,
+          actorRole: user.role,
+          targetEntityType: 'user',
+          targetEntityId: user.id,
+          ipAddress: getClientIp(req),
+          userAgent: req.headers['user-agent'] || null,
+          metadata: JSON.stringify({
+            email: user.email,
+          }),
+        },
+      });
+
+      // 6. Generate a 6-digit email verification code
+      const code = Math.floor(
+        100000 + Math.random() * 900000
+      ).toString();
+
+      const expiresAt = Date.now() + 10 * 60 * 1000;
+
+      // Store the OTP using the normalized email
+      emailOtpCodes.set(normalizedEmail, {
+        code,
+        purpose: 'verification',
+        expiresAt,
+        attempts: 1,
+      });
+
+      // 7. Send the verification email
+      const emailSent = await sendOtpEmail({
+        to: normalizedEmail,
+        otp: code,
+        purpose: 'verification',
+      });
+
+      if (!emailSent) {
+        logger.warn(
+          `[EmailVerification] Registration OTP send failed for ${normalizedEmail}`
+        );
+      }
+
+      // 8. Do NOT issue a JWT before email verification
+      return res.status(201).json({
+        success: true,
+        data: {
+          message:
+            'Account created. Please verify your email address with the code sent to your inbox to complete signup.',
+          email: normalizedEmail,
+          emailVerified: false,
+          devCode:
+            ENV.NODE_ENV !== 'production' ? code : undefined,
+        },
+      });
+    } catch (err: any) {
+      logger.error('[Registration] Failed:', err);
+
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'REGISTER_ERROR',
+          message: 'Unable to register your account. Please try again.',
+        },
+      });
     }
-    catch (err) {
-        res.status(500).json({ success: false, error: { code: 'REGISTER_ERROR', message: err.message } });
-    }
-});
+  }
+);
 // POST /auth/login
 router.post('/login', (0, validate_1.validateBody)(schemas_1.loginSchema), async (req, res) => {
     try {
