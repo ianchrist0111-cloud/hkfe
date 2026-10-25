@@ -2,11 +2,19 @@
   "version": 2,
   "builds": [
     {
+      "src": "src/vercel-health.ts",
+      "use": "@vercel/node"
+    },
+    {
       "src": "src/vercel.ts",
       "use": "@vercel/node"
     }
   ],
   "routes": [
+    {
+      "src": "/__debug",
+      "dest": "src/vercel-health.ts"
+    },
     {
       "src": "/(.*)",
       "dest": "src/vercel.ts"
