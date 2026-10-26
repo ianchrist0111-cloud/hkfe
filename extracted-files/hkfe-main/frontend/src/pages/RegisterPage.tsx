@@ -11,6 +11,10 @@ export default function RegisterPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [verifyStage, setVerifyStage] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  const [emailCreated, setEmailCreated] = useState('');
 
   const strength = (pw: string) => {
     let s = 0;
@@ -31,68 +35,130 @@ export default function RegisterPage() {
     return e;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleVerifyEmail = async () => {
+    if (!emailCreated) return;
     setServerError('');
-    const errs = validate();
-    setErrors(errs);
-    if (Object.keys(errs).length) return;
-    setLoading(true);
-
+    setVerificationLoading(true);
     try {
-      const res = await api.register({
-        email: form.email,
-        password: form.password,
-        firstName: form.email.split('@')[0],
-      });
-
-      if (res.success && res.data?.token) {
-        setAuthToken(res.data.token);
-        login(res.data.user, res.data.token);
-        useWalletStore.getState().fetchWallet().catch(() => {});
-        navigate('/onboarding');
-        return;
-      }
-
-      if (res.error) {
-        if (res.error.code === 'NETWORK_ERROR') {
-          // Fallback in offline / mock dev mode
-          login({
-            id: `user-${Date.now()}`,
-            email: form.email,
-            firstName: form.email.split('@')[0],
-            lastName: '',
-            role: 'user',
-            kycStatus: 'pending',
-            mfaEnabled: false,
-            createdAt: new Date().toISOString(),
-            lastLoginAt: new Date().toISOString(),
-          }, 'demo-token');
+      const res = await api.verifyOtp(emailCreated, verificationCode.trim(), 'verification');
+      if (res.success) {
+        const loginRes = await api.login({ email: emailCreated, password: form.password });
+        if (loginRes.success && loginRes.data?.token) {
+          setAuthToken(loginRes.data.token);
+          login(loginRes.data.user, loginRes.data.token);
+          useWalletStore.getState().fetchWallet().catch(() => {});
           navigate('/onboarding');
           return;
         }
-        setServerError(res.error.message || 'Registration failed.');
+        setServerError(loginRes.error?.message || 'Verification succeeded, but login could not continue.');
+        return;
       }
+
+      setServerError(res.error?.message || 'Invalid verification code.');
     } catch {
-      // Offline fallback
-      login({
-        id: `user-${Date.now()}`,
-        email: form.email,
-        firstName: form.email.split('@')[0],
-        lastName: '',
-        role: 'user',
-        kycStatus: 'pending',
-        mfaEnabled: false,
-        createdAt: new Date().toISOString(),
-        lastLoginAt: new Date().toISOString(),
-      }, 'demo-token');
-      navigate('/onboarding');
+      setServerError('Could not confirm the verification code.');
+    } finally {
+      setVerificationLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (!emailCreated) return;
+    setServerError('');
+    const res = await api.sendOtp(emailCreated, 'verification');
+    if (res.success) {
+      setServerError('');
+      return;
+    }
+    setServerError(res.error?.message || 'Could not resend the verification code.');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setServerError('');
+
+    const errs = validate();
+    setErrors(errs);
+    if (Object.keys(errs).length) return;
+
+    setLoading(true);
+
+    try {
+      const normalizedEmail = form.email.trim().toLowerCase();
+      const res = await api.register({
+        email: normalizedEmail,
+        password: form.password,
+        firstName: normalizedEmail.split('@')[0],
+      });
+
+      if (res.success) {
+        setEmailCreated(normalizedEmail);
+        setVerifyStage(true);
+        setVerificationCode('');
+        return;
+      }
+
+      setServerError(res.error?.message || 'Registration failed. Please try again.');
+    } catch {
+      setServerError('Could not connect to the server. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   const pw_strength = strength(form.password);
+
+  if (verifyStage) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.bg} />
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <div className={styles.logo}><span className={styles.logoMark}>HK</span><span className={styles.logoText}>FES</span></div>
+            <h1>Verify your email</h1>
+          </div>
+
+          <div className={styles.form}>
+            <div className={styles.field}>
+              <label>Email address</label>
+              <input type="email" value={emailCreated} disabled />
+            </div>
+
+            <div className={styles.field}>
+              <label>Verification code</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="Enter 6-digit code"
+                value={verificationCode}
+                onChange={e => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              />
+            </div>
+
+            {serverError && <div className={styles.errorAlert} style={{ marginTop: 8 }}>{serverError}</div>}
+
+            <button type="button" className={`tapticPress ${styles.btnSubmit}`} onClick={handleVerifyEmail} disabled={verificationLoading || verificationCode.length !== 6}>
+              {verificationLoading ? <span className={styles.spinner} /> : 'Verify & Finish Signup'}
+            </button>
+
+            <button type="button" className={`tapticPress ${styles.createAccountBtn}`} onClick={handleResendCode} style={{ marginTop: 12 }}>
+              Resend code
+            </button>
+          </div>
+
+          <div className={styles.cardFooter}>
+            <div className={styles.cardFooterText}>
+              <span>Need to change your email?</span>
+            </div>
+            <button type="button" className={`tapticPress ${styles.createAccountBtn}`} onClick={() => { setVerifyStage(false); setServerError(''); setVerificationCode(''); }}>
+              Back to sign up
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>

@@ -135,6 +135,12 @@ export const api = {
   verifyEmail: (code: string) =>
     apiRequest('/auth/verify-email', { method: 'POST', body: JSON.stringify({ code }) }),
 
+  verifyEmailLink: (token: string) =>
+    apiRequest('/auth/otp/verify-link', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    }),
+
   // OTP endpoints (new email-based OTP system)
   sendOtp: (email: string, purpose: string = 'verification') =>
     apiRequest('/auth/otp/send', { method: 'POST', body: JSON.stringify({ email, purpose }) }),

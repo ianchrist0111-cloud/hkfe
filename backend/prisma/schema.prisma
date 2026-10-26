@@ -350,3 +350,18 @@ model SupportMessage {
 
   @@index([ticketId])
 }
+model EmailOtp {
+  id              String   @id @default(uuid())
+  email           String
+  purpose         String
+  codeHash        String
+  linkTokenHash   String?
+  expiresAt       DateTime
+  attempts        Int      @default(0)
+  sendCount       Int      @default(1)
+  windowStartedAt DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  @@unique([email, purpose])
+  @@index([expiresAt])
+}

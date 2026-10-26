@@ -27,7 +27,6 @@ const emailVerificationCodes = new Map<string, { code: string; email: string; ex
 
 // ─── In-Memory Email OTP Codes ───────────────────────────────
 // Maps email -> { code: string; purpose: string; expiresAt: number; attempts: number }
-const emailOtpCodes = new Map<string, { code: string; purpose: string; expiresAt: number; attempts: number }>();
 
 export const isTokenBlacklisted = (token: string): boolean => {
   return tokenBlacklist.has(token);
@@ -109,16 +108,47 @@ router.post('/register', validateBody(registerSchema), async (req, res: Response
       },
     });
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = Date.now() + 10 * 60 * 1000;
-    emailOtpCodes.set(normalizedEmail, {
-      code,
-      purpose: 'verification',
-      expiresAt,
-      attempts: 1,
+    const code = crypto.randomInt(100000, 1000000).toString();
+    const linkToken = crypto.randomBytes(32).toString('hex');
+    const linkTokenHash = crypto.createHash('sha256').update(linkToken).digest('hex');
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 10 * 60 * 1000);
+    const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+    const verificationUrl = `${ENV.FRONTEND_URL.replace(/\/$/, '')}/verify-email?token=${encodeURIComponent(linkToken)}`;
+
+    await prisma.emailOtp.upsert({
+      where: {
+        email_purpose: {
+          email: normalizedEmail,
+          purpose: 'verification',
+        },
+      },
+      create: {
+        email: normalizedEmail,
+        purpose: 'verification',
+        codeHash,
+        linkTokenHash,
+        expiresAt,
+        attempts: 0,
+        sendCount: 1,
+        windowStartedAt: now,
+      },
+      update: {
+        codeHash,
+        linkTokenHash,
+        expiresAt,
+        attempts: 0,
+        sendCount: 1,
+        windowStartedAt: now,
+      },
     });
 
-    const emailSent = await sendOtpEmail({ to: normalizedEmail, otp: code, purpose: 'verification' });
+    const emailSent = await sendOtpEmail({
+      to: normalizedEmail,
+      otp: code,
+      purpose: 'verification',
+      verificationUrl,
+    });
     if (!emailSent) {
       logger.warn(`[EmailVerification] Registration OTP send failed for ${normalizedEmail}`);
     }
@@ -848,7 +878,8 @@ router.post('/verify-email', authenticateJwt, validateBody(verifyEmailSchema), a
 // POST /auth/otp/send — Send OTP to email for various purposes
 router.post('/otp/send', validateBody(sendOtpSchema), async (req, res: Response) => {
   try {
-    const { email, purpose = 'verification' } = req.body;
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const purpose = req.body.purpose || 'verification';
 
     if (!email || !email.includes('@')) {
       return res.status(400).json({
@@ -857,9 +888,9 @@ router.post('/otp/send', validateBody(sendOtpSchema), async (req, res: Response)
       });
     }
 
-    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+    const user = await prisma.user.findUnique({ where: { email } });
 
-    // For security, always return success even if user doesn't exist (prevents enumeration)
+    // Avoid revealing whether an account exists.
     if (!user) {
       return res.json({
         success: true,
@@ -867,29 +898,65 @@ router.post('/otp/send', validateBody(sendOtpSchema), async (req, res: Response)
       });
     }
 
-    // Check rate limiting - max 3 OTPs per 5 minutes per email
-    const existingOtp = emailOtpCodes.get(email);
-    if (existingOtp && existingOtp.expiresAt > Date.now() && existingOtp.attempts >= 3) {
+    const now = new Date();
+    const existingOtp = await prisma.emailOtp.findUnique({
+      where: { email_purpose: { email, purpose } },
+    });
+
+    const windowIsActive = Boolean(
+      existingOtp &&
+      now.getTime() - existingOtp.windowStartedAt.getTime() < 5 * 60 * 1000
+    );
+
+    if (existingOtp && windowIsActive && existingOtp.sendCount >= 3) {
       return res.status(429).json({
         success: false,
-        error: { code: 'RATE_LIMITED', message: 'Too many OTP requests. Please wait 5 minutes before trying again.' },
+        error: {
+          code: 'RATE_LIMITED',
+          message: 'Too many OTP requests. Please wait 5 minutes before trying again.',
+        },
       });
     }
 
-    // Generate 6-digit OTP
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+    const code = crypto.randomInt(100000, 1000000).toString();
+    const linkToken = purpose === 'verification' ? crypto.randomBytes(32).toString('hex') : null;
+    const linkTokenHash = linkToken
+      ? crypto.createHash('sha256').update(linkToken).digest('hex')
+      : null;
+    const verificationUrl = linkToken
+      ? `${ENV.FRONTEND_URL.replace(/\/$/, '')}/verify-email?token=${encodeURIComponent(linkToken)}`
+      : undefined;
+    const codeHash = crypto.createHash('sha256').update(code).digest('hex');
+    const expiresAt = new Date(now.getTime() + 10 * 60 * 1000);
 
-    // Store OTP
-    emailOtpCodes.set(email, {
-      code,
-      purpose,
-      expiresAt,
-      attempts: existingOtp ? existingOtp.attempts + 1 : 1,
+    await prisma.emailOtp.upsert({
+      where: { email_purpose: { email, purpose } },
+      create: {
+        email,
+        purpose,
+        codeHash,
+        linkTokenHash,
+        expiresAt,
+        attempts: 0,
+        sendCount: 1,
+        windowStartedAt: now,
+      },
+      update: {
+        codeHash,
+        linkTokenHash,
+        expiresAt,
+        attempts: 0,
+        sendCount: windowIsActive ? existingOtp!.sendCount + 1 : 1,
+        windowStartedAt: windowIsActive ? existingOtp!.windowStartedAt : now,
+      },
     });
 
-    // Send email
-    const emailSent = await sendOtpEmail({ to: email, otp: code, purpose });
+    const emailSent = await sendOtpEmail({
+      to: email,
+      otp: code,
+      purpose,
+      verificationUrl,
+    });
 
     if (!emailSent) {
       return res.status(500).json({
@@ -911,60 +978,77 @@ router.post('/otp/send', validateBody(sendOtpSchema), async (req, res: Response)
       },
     });
 
-    res.json({
+    return res.json({
       success: true,
-      data: {
-        message: 'OTP has been sent to your email address.',
-      },
+      data: { message: 'OTP has been sent to your email address.' },
     });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: { code: 'OTP_SEND_ERROR', message: err.message } });
+    return res.status(500).json({
+      success: false,
+      error: { code: 'OTP_SEND_ERROR', message: err.message },
+    });
   }
 });
 
-// POST /auth/otp/verify — Verify OTP code
-router.post('/otp/verify', validateBody(verifyOtpSchema), async (req, res: Response) => {
+// POST /auth/otp/verify-link — Verify email from a secure email link
+router.post('/otp/verify-link', async (req, res: Response) => {
   try {
-    const { email, code, purpose = 'verification' } = req.body;
+    const token = String(req.body?.token || '').trim();
 
-    if (!email || !code) {
+    if (!/^[a-f0-9]{64}$/i.test(token)) {
       return res.status(400).json({
         success: false,
-        error: { code: 'MISSING_FIELDS', message: 'Email and code are required.' },
+        error: {
+          code: 'INVALID_VERIFICATION_LINK',
+          message: 'This verification link is invalid or expired.',
+        },
       });
     }
 
-    const record = emailOtpCodes.get(email);
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const record = await prisma.emailOtp.findFirst({
+      where: {
+        purpose: 'verification',
+        linkTokenHash: tokenHash,
+        expiresAt: { gt: new Date() },
+      },
+    });
 
-    // Accept stored code, or universal master test code 123456 in dev/test
-    const isValid = (record && record.code === code && record.expiresAt > Date.now() && record.purpose === purpose) ||
-      (ENV.NODE_ENV !== 'production' && code === '123456');
-
-    if (!isValid) {
+    if (!record) {
       return res.status(400).json({
         success: false,
-        error: { code: 'INVALID_OTP', message: 'Invalid or expired OTP code.' },
+        error: {
+          code: 'INVALID_VERIFICATION_LINK',
+          message: 'This verification link is invalid, expired, or already used.',
+        },
       });
     }
 
-    // OTP verified - remove from storage
-    emailOtpCodes.delete(email);
+    const user = await prisma.user.findUnique({
+      where: { email: record.email },
+    });
 
-    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'INVALID_VERIFICATION_LINK',
+          message: 'This verification link is invalid or expired.',
+        },
+      });
+    }
 
-    if (user) {
-      // If this is for email verification, mark the user as verified
-      if (purpose === 'verification' && !user.emailVerified) {
-        await prisma.user.update({
+    await prisma.$transaction(async (tx) => {
+      await tx.emailOtp.delete({ where: { id: record.id } });
+
+      if (!user.emailVerified) {
+        await tx.user.update({
           where: { id: user.id },
-          data: {
-            emailVerified: true,
-            emailVerifiedAt: new Date(),
-          },
+          data: { emailVerified: true, emailVerifiedAt: new Date() },
         });
       }
 
-      await prisma.auditLog.create({
+      await tx.auditLog.create({
         data: {
           eventType: 'OTP_VERIFIED',
           actorId: user.id,
@@ -973,12 +1057,129 @@ router.post('/otp/verify', validateBody(verifyOtpSchema), async (req, res: Respo
           targetEntityId: user.id,
           ipAddress: getClientIp(req),
           userAgent: req.headers['user-agent'] || null,
-          metadata: JSON.stringify({ purpose }),
+          metadata: JSON.stringify({
+            purpose: 'verification',
+            method: 'email_link',
+          }),
+        },
+      });
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        message: 'Email verified successfully.',
+        emailVerified: true,
+      },
+    });
+  } catch (err: any) {
+    logger.error(`[EmailVerification] Link verification failed: ${err.message}`);
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: 'VERIFY_LINK_ERROR',
+        message: 'Could not verify this link. Please try again.',
+      },
+    });
+  }
+});
+
+// POST /auth/otp/verify — Verify OTP code
+router.post('/otp/verify', validateBody(verifyOtpSchema), async (req, res: Response) => {
+  try {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const code = String(req.body.code || '').trim();
+    const purpose = req.body.purpose || 'verification';
+
+    if (!email || !code) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'MISSING_FIELDS', message: 'Email and code are required.' },
+      });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_OTP', message: 'Invalid or expired OTP code.' },
+      });
+    }
+
+    const record = await prisma.emailOtp.findUnique({
+      where: { email_purpose: { email, purpose } },
+    });
+
+    if (!record || record.expiresAt.getTime() <= Date.now()) {
+      if (record) {
+        await prisma.emailOtp.deleteMany({
+          where: { email, purpose },
+        });
+      }
+
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_OTP', message: 'Invalid or expired OTP code.' },
+      });
+    }
+
+    if (record.attempts >= 5) {
+      return res.status(429).json({
+        success: false,
+        error: {
+          code: 'OTP_ATTEMPTS_EXCEEDED',
+          message: 'Too many incorrect attempts. Please request a new OTP.',
         },
       });
     }
 
-    res.json({
+    // Count each verification attempt to limit guessing.
+    await prisma.emailOtp.update({
+      where: { email_purpose: { email, purpose } },
+      data: { attempts: { increment: 1 } },
+    });
+
+    const submittedHash = crypto.createHash('sha256').update(code).digest('hex');
+    const hashesMatch = crypto.timingSafeEqual(
+      Buffer.from(submittedHash, 'hex'),
+      Buffer.from(record.codeHash, 'hex')
+    );
+
+    if (!hashesMatch) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_OTP', message: 'Invalid or expired OTP code.' },
+      });
+    }
+
+    // A valid OTP is single-use.
+    await prisma.emailOtp.deleteMany({ where: { email, purpose } });
+
+    if (purpose === 'verification' && !user.emailVerified) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          emailVerified: true,
+          emailVerifiedAt: new Date(),
+        },
+      });
+    }
+
+    await prisma.auditLog.create({
+      data: {
+        eventType: 'OTP_VERIFIED',
+        actorId: user.id,
+        actorRole: user.role,
+        targetEntityType: 'user',
+        targetEntityId: user.id,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers['user-agent'] || null,
+        metadata: JSON.stringify({ purpose }),
+      },
+    });
+
+    return res.json({
       success: true,
       data: {
         message: 'OTP verified successfully.',
@@ -986,18 +1187,11 @@ router.post('/otp/verify', validateBody(verifyOtpSchema), async (req, res: Respo
       },
     });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: { code: 'OTP_VERIFY_ERROR', message: err.message } });
+    return res.status(500).json({
+      success: false,
+      error: { code: 'OTP_VERIFY_ERROR', message: err.message },
+    });
   }
 });
-
-// Clean up expired OTP codes every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [email, data] of emailOtpCodes.entries()) {
-    if (data.expiresAt < now) {
-      emailOtpCodes.delete(email);
-    }
-  }
-}, 300000).unref();
 
 export default router;

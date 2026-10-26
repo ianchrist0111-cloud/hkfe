@@ -16,6 +16,7 @@ import PwaAutoInstallPrompt from './components/ui/PwaAutoInstallPrompt';
 import LandingPage from './pages/LandingPage';
 import OnboardingPage from './pages/OnboardingPage';
 import RegisterPage from './pages/RegisterPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 import LoginPage from './pages/LoginPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import KycPage from './pages/KycPage';
@@ -189,6 +190,7 @@ export default function App() {
           <Route path="/" element={<PublicRoute><LoginPage /></PublicRoute>} />
           <Route path="/onboarding" element={<PublicRoute><OnboardingPage /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/landing" element={<PublicRoute><LandingPage /></PublicRoute>} />

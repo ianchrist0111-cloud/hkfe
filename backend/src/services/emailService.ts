@@ -154,10 +154,12 @@ export async function sendOtpEmail({
   to,
   otp,
   purpose = 'verification',
+  verificationUrl,
 }: {
   to: string;
   otp: string;
   purpose?: string;
+  verificationUrl?: string;
 }): Promise<boolean> {
   const purposeText = {
     login: 'login authentication',
@@ -179,8 +181,19 @@ export async function sendOtpEmail({
         <div style="background: #f5f5f5; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
           <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #00e599;">${otp}</span>
         </div>
+        ${purpose === 'verification' && verificationUrl ? `
+        <div style="text-align: center; margin: 28px 0;">
+          <a href="${verificationUrl}" style="display: inline-block; background: #00e599; color: #07090e; padding: 14px 26px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+            Verify Email Address
+          </a>
+        </div>
+        <p style="color: #666; font-size: 13px; line-height: 1.6;">
+          If the button doesn't work, open this link in your browser:
+          <a href="${verificationUrl}">${verificationUrl}</a>
+        </p>
+        ` : ''}
         <p style="color: #666; font-size: 14px; line-height: 1.6;">
-          This code will expire in <strong>10 minutes</strong>. Please do not share this code with anyone.
+          Your code and verification link expire in <strong>10 minutes</strong>. Please do not share them with anyone.
         </p>
         <p style="color: #666; font-size: 14px; line-height: 1.6;">
           If you did not request this code, please ignore this email and ensure your account is secure.
@@ -201,6 +214,10 @@ export async function sendOtpEmail({
     Your code is: ${otp}
 
     This code will expire in 10 minutes. Please do not share this code with anyone.
+    ${purpose === 'verification' && verificationUrl ? `
+
+    Verify your email address using this link:
+    ${verificationUrl}` : ''}
 
     If you did not request this code, please ignore this email and ensure your account is secure.
 
@@ -208,7 +225,7 @@ export async function sendOtpEmail({
     This is an automated message from HKFES Trading. Please do not reply to this email.
   `;
 
-  logger.info(`[EMAIL OTP] To: ${to}, Code: ${otp}, Purpose: ${purpose}`);
+  logger.info(`[EMAIL OTP] Sending ${purpose} email to ${to}`);
   return sendEmail({
     to,
     subject: `HKFES Trading - Your Verification Code`,
