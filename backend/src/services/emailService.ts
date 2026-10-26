@@ -13,7 +13,37 @@ let transporter: any = null;
 export function initializeEmailTransporter() {
   logger.info(`[Email Service] Initializing with provider: ${ENV.EMAIL_SERVICE}`);
 
-  if (ENV.EMAIL_SERVICE === 'mailtrap') {
+  if (ENV.EMAIL_SERVICE === 'gmail') {
+  const {
+    EMAIL_USER,
+    GMAIL_CLIENT_ID,
+    GMAIL_CLIENT_SECRET,
+    GMAIL_REFRESH_TOKEN,
+  } = ENV;
+
+  if (
+    !EMAIL_USER ||
+    !GMAIL_CLIENT_ID ||
+    !GMAIL_CLIENT_SECRET ||
+    !GMAIL_REFRESH_TOKEN
+  ) {
+    throw new Error(
+      'Gmail OAuth2 configuration is incomplete. Check backend environment variables.'
+    );
+  }
+
+  transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      type: 'OAuth2',
+      user: EMAIL_USER,
+      clientId: GMAIL_CLIENT_ID,
+      clientSecret: GMAIL_CLIENT_SECRET,
+      refreshToken: GMAIL_REFRESH_TOKEN,
+    },
+  });
+}
+ else if (ENV.EMAIL_SERVICE === 'mailtrap') {
     // Mailtrap (recommended for testing)
     if (!ENV.MAILTRAP_API_TOKEN) {
       logger.warn('[Email Service] Mailtrap API token not configured. Falling back to console mode.');
@@ -25,16 +55,6 @@ export function initializeEmailTransporter() {
       })
     );
     logger.info('[Email Service] Mailtrap configured successfully');
-  } else if (ENV.EMAIL_SERVICE === 'gmail') {
-    // Gmail SMTP
-    transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: ENV.EMAIL_USER,
-        pass: ENV.EMAIL_PASSWORD,
-      },
-    });
-    logger.info('[Email Service] Gmail SMTP configured');
   } else if (ENV.EMAIL_SERVICE === 'smtp') {
     // Custom SMTP
     logger.info(`[Email Service] SMTP configured: ${ENV.SMTP_HOST}:${ENV.SMTP_PORT}`);

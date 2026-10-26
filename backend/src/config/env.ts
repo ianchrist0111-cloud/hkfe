@@ -33,6 +33,10 @@ export const ENV = {
   EMAIL_FROM: process.env.EMAIL_FROM || 'noreply@hkfes-trading.com',
   EMAIL_USER: process.env.EMAIL_USER || '',
   EMAIL_PASSWORD: process.env.EMAIL_PASSWORD || '',
+  //Gmail OAuth2 cofiguration
+  GMAIL_CLIENT_ID: process.env.GMAIL_CLIENT_ID || '',
+GMAIL_CLIENT_SECRET: process.env.GMAIL_CLIENT_SECRET || '',
+GMAIL_REFRESH_TOKEN: process.env.GMAIL_REFRESH_TOKEN || '',
   // SMTP configuration (for custom SMTP)
   SMTP_HOST: process.env.SMTP_HOST || '',
   SMTP_PORT: process.env.SMTP_PORT || '587',
